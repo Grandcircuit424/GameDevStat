@@ -6,7 +6,9 @@ import math
 CSVFiles = ["User ID", "NPC ID", "User level","NPC friendliness", "Interest", "Interaction length", "Interaction quests acquired"]
 
 def predict(x1, w1, b):
-  return (w1 * (x1)**2)+x1-100 + b
+  print(w1, b)
+  np.square(x1)
+  return (w1 * (x1)**2) + b
 
 # Function to compute cost (Mean Squared Error)
 def compute_cost(x_train, y_true, w, b):
@@ -64,7 +66,7 @@ def main():
 
    best_w, best_b, cost_history, w_history, b_history = train_linear_regression(FillerDF3['NPC friendliness'], FillerDF3['Interest'], 0,0,.0001,20)
    print(f"{best_w} : {best_b} : {cost_history[len(cost_history)-1]}")
-
+   '''
    plt.plot(range(20), cost_history)
    plt.title("MSE vs iteration (LVL 10)")
    plt.xlabel("Iteration")
@@ -85,16 +87,17 @@ def main():
             axes[i,j].set_xlabel("NPC friendliness")
             axes[i,j].set_ylabel("Interest")
             z=z+1
-
-   '''
-   idf["X"] = idf["NPC friendliness"]
-   idf["Y"] = idf["Interest"]
+    '''
+   
+   idf["X"] = FillerDF3["NPC friendliness"]
+   idf["Y"] = FillerDF3["Interest"]
 
    plt.scatter(idf["X"], idf["Y"])
+   plt.plot(idf["X"], predict(idf["X"], best_w, best_b))
    plt.title("NPC friendliness v Interest")
    plt.xlabel("NPC friendliness")
    plt.ylabel("Interest")
-   '''
+   
 
    '''
    x = np.arange(0, math.radians(1800), math.radians(12))

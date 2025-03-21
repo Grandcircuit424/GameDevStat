@@ -1,3 +1,4 @@
+from asyncio.windows_events import NULL
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -5,8 +6,17 @@ import math
 
 CSVFiles = ["User ID", "NPC ID", "User level","NPC friendliness", "Interest", "Interaction length", "Interaction quests acquired"]
 
+def MaxAndMin(x):
+  newFrame = x.copy()
+  max = x.max()
+  min = x.min()
+  for i in range(len(x)):
+      newFrame[i] = (newFrame[i]-min)/(max-min)
+
+  return newFrame
+
 def predict(x1, w1, b):
-  return (w1 * (x1**2)) + b
+  return (w1 * ((x1)**.5)) + b
 
 # Function to compute cost (Mean Squared Error)
 def compute_cost(x_train, y_true, w, b):
@@ -49,62 +59,71 @@ def main():
    ondf = pd.read_csv(r'C:\Users\Grand\source\repos\Grandcircuit424\GameDevStat\GameDevStats\Updated_Old_NPCs.csv')
    sndf = pd.read_csv(r'C:\Users\Grand\source\repos\Grandcircuit424\GameDevStat\GameDevStats\Updated_Seasonal_NPCs.csv')
 
-   lvl10 = sorter("NPC ID", "NPC area level", 10, sndf)
-   lvl20 = sorter("NPC ID", "NPC area level", 20, sndf)
-   lvl30 = sorter("NPC ID", "NPC area level", 30, sndf)
-   lvl40 = sorter("NPC ID", "NPC area level", 40, sndf)
+   idf_4 = idf[idf['User level'] >= 40].reset_index(drop=True)
+   idf_3 = idf[(idf['User level'] < 40) & (idf['User level'] >= 30)].reset_index(drop=True)
+   idf_2 = idf[(idf['User level'] < 30) & (idf['User level'] >= 21)].reset_index(drop=True)
+   idf_1 = idf[idf['User level'] < 20].reset_index(drop=True)
 
-   FillerDF1 = idf[idf['NPC ID'].isin(lvl10)]
-   FillerDF2 = idf[idf['NPC ID'].isin(lvl20)]
-   FillerDF3 = idf[idf['NPC ID'].isin(lvl30)]
-   FillerDF4 = idf[idf['NPC ID'].isin(lvl40)]
-   FillerArray = [FillerDF1,FillerDF2,FillerDF3,FillerDF4]
+
    pd.set_option('display.max_rows', None)
-
-
-   best_w, best_b, cost_history, w_history, b_history = train_linear_regression(FillerDF2['NPC friendliness'], FillerDF2['Interest'], 0,0,.0001,100)
+   pd.set_option('display.max_column', None)
+   best_w, best_b, cost_history, w_history, b_history = train_linear_regression(idf_1['NPC friendliness'], idf_1['Interest'], 0,0,.0001,100)
    print(f"{best_w} : {best_b} : {cost_history[len(cost_history)-1]}")
-   print(FillerDF2['NPC friendliness'])
+ 
 
-   '''
-   plt.plot(range(20), cost_history)
+
+   # MSE vs Iteration graph
+   plt.plot(range(100), cost_history)
    plt.title("MSE vs iteration (LVL 10)")
    plt.xlabel("Iteration")
    plt.ylabel("MSE")
-
+   plt.show()
   
+   
+ 
+   ## The 4 populations devided
    fig, axes = plt.subplots(2, 2, figsize=(30, 24))
 
-   axes[0,0].scatter(FillerDF1['NPC friendliness'], FillerDF1['Interest'], 5, 'red')
-   axes[0,1].scatter(FillerDF2['NPC friendliness'], FillerDF2['Interest'], 5, 'blue')
-   axes[1,0].scatter(FillerDF3['NPC friendliness'], FillerDF3['Interest'], 5, 'green')
-   axes[1,1].scatter(FillerDF4['NPC friendliness'], FillerDF4['Interest'], 5, 'black')
+   #Scattering data for each population
+   axes[0,0].scatter(idf_1['NPC friendliness'], idf_1['Interest'], 5, 'red')
+   axes[0,1].scatter(idf_2['NPC friendliness'], idf_2['Interest'], 5, 'blue')
+   axes[1,0].scatter(idf_3['NPC friendliness'], idf_3['Interest'], 5, 'green')
+   axes[1,1].scatter(idf_4['NPC friendliness'], idf_4['Interest'], 5, 'black')
 
-   z=1
+   ## Title and axis
+   axes[0,0].set_title(f"NPC friendliness V Interest <LVL20")
+   axes[0,1].set_title(f"NPC friendliness V Interest LVL21-30")
+   axes[1,0].set_title(f"NPC friendliness V Interest LVL31-40")
+   axes[1,1].set_title(f"NPC friendliness V Interest >LVL40")
    for i in range(2):
-       for j in range(2):
-            axes[i,j].set_title(f"NPC friendliness V Interest LVL{z}0")
-            axes[i,j].set_xlabel("NPC friendliness")
-            axes[i,j].set_ylabel("Interest")
-            z=z+1
-    '''
-   
-   idf["X"] = FillerDF3["NPC friendliness"]
-   idf["Y"] = FillerDF3["Interest"]
-   plt.scatter(FillerDF3["NPC friendliness"], FillerDF3["Interest"])
-   plt.scatter(FillerDF3["NPC friendliness"], predict(FillerDF3["NPC friendliness"], best_w, best_b))
-   plt.title("NPC friendliness v Interest")
+        for j in range(2):
+            axes[i-1,j-1].set_xlabel("NPC friendliness")
+            axes[i-1,j-1].set_ylabel("Interest")
+   plt.show()
+
+    #Gradient Descent graph for lvl20>
+   plt.title("NPC friendliness v Interest LVL21>")
+   idf_1 = idf_1.sort_values('NPC friendliness')
+
+   plt.scatter(idf_1["NPC friendliness"], idf_1["Interest"], 5, 'b')
    plt.xlabel("NPC friendliness")
    plt.ylabel("Interest")
-   
 
-   '''
+ 
+   plt.plot(idf_1["NPC friendliness"], predict(idf_1["NPC friendliness"], best_w, best_b), 'r')
+   plt.title("NPC friendliness v Interest (LVL10)")
+   plt.xlabel("NPC friendliness")
+   plt.ylabel("Interest")
+ 
+   plt.show()
+   
+   # 7x7 Grid on interaction data
    x = np.arange(0, math.radians(1800), math.radians(12))
    fig, axes = plt.subplots(7, 7, figsize=(30, 24))
    for i in range(7):
        for j in range(7):
-            axes[i,j].scatter(FillerDF2[CSVFiles[i]], FillerDF2[CSVFiles[j]], .5, 'g')
-   '''
+            axes[i,j].scatter(idf[CSVFiles[i]], idf[CSVFiles[j]], .5, 'g')
+   
 
    plt.show()
    
